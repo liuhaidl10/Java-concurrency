@@ -109,6 +109,43 @@ execute方法执行逻辑有这样几种情况：
 
 需要注意的是，线程池的设计思想就是使用了**核心线程池corePoolSize，阻塞队列workQueue和线程池maximumPoolSize**，这样的缓存策略来处理任务，实际上这样的设计思想在需要框架中都会使用。
 
+```java
+ class Producer implements Runnable {
+    private final BlockingQueue queue;
+    Producer(BlockingQueue q) { queue = q; }
+    public void run() {
+      try {
+        while (true) { queue.put(produce()); }
+      } catch (InterruptedException ex) { ... handle ...}
+    }
+    Object produce() { ... }
+  }
+ 
+  class Consumer implements Runnable {
+    private final BlockingQueue queue;
+    Consumer(BlockingQueue q) { queue = q; }
+    public void run() {
+      try {
+        while (true) { consume(queue.take()); }
+      } catch (InterruptedException ex) { ... handle ...}
+    }
+    void consume(Object x) { ... }
+  }
+ 
+  class Setup {
+    void main() {
+      BlockingQueue q = new SomeQueueImplementation();
+      Producer p = new Producer(q);
+      Consumer c1 = new Consumer(q);
+      Consumer c2 = new Consumer(q);
+      new Thread(p).start();
+      new Thread(c1).start();
+      new Thread(c2).start();
+    }
+  }}
+```
+
+
 # 4. 线程池的关闭 #
 
 关闭线程池，可以通过`shutdown`和`shutdownNow`这两个方法。它们的原理都是遍历线程池中所有的线程，然后依次中断线程。`shutdown`和`shutdownNow`还是有不一样的地方：
